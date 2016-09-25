@@ -2,6 +2,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import copy
 
 RRdata = 'RRdata.txt'
 
@@ -18,8 +19,9 @@ def loadDataSet(fileName):
 
 def ridgeRegress(xVal, yVal, lamda=0):
     lambdaI = lamda * np.eye(3)
-    lambdaI[1][1] = 0
+    lambdaI[0][0] = 0
     beta = np.dot(np.dot(np.linalg.inv(np.dot(xVal.T, xVal) + lambdaI), xVal.T), yVal)
+    beta[1] = np.mean(yVal)
     # fig = plt.figure()
     # ax = fig.add_subplot(111, projection='3d')
     # x1 = np.arange(np.min(xVal[:, 1]), np.max(xVal[:, 1]), 0.1)
@@ -35,10 +37,13 @@ def ridgeRegress(xVal, yVal, lamda=0):
     # print beta
     return beta
 
+
 def cv(xVal, yVal):
     index = range(0, len(yVal))
     random.seed(37)
     random.shuffle(index)
+    # x = copy.copy(xVal)
+    # y = copy.copy(yVal)
     x = xVal
     y = yVal
     for i in range(len(yVal)):
@@ -46,7 +51,7 @@ def cv(xVal, yVal):
         y[i] = yVal[index[i]]  # get shuffled x and y
     lambdas = []
     for i in range(50):
-        lambdas.append(0.02 + i * 0.02)
+        lambdas.append(0.02 + i * 0.02)  # get lambda
     mse = []
     fold_size = len(yVal) / 10
     for i in range(len(lambdas)):
@@ -59,6 +64,8 @@ def cv(xVal, yVal):
             beta = ridgeRegress(train_x, train_y, lambdas[i])
             error += np.sum(np.square(test_y - np.dot(test_x, beta)))/fold_size
         mse.append(error / 10)
+    plt.plot(lambdas, mse, 'ro')
+    plt.show()
     print min(mse)
     print mse.index(min(mse))
     print lambdas[mse.index(min(mse))]
